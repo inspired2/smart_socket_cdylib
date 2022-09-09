@@ -1,8 +1,8 @@
-//use std::ffi::{CString};
+use std::ffi::CString;
 
 #[repr(C)]
 pub struct PowerSocket {
-    name: String,
+    name: CString,
     state: PowerSocketState,
     power_consumption: usize,
 }
@@ -17,7 +17,6 @@ impl Default for PowerSocket {
 }
 
 impl PowerSocket {
-
     pub fn new() -> Self {
         Self::default()
     }
