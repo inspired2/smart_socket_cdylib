@@ -1,9 +1,8 @@
-use std::ffi::{CStr, CString};
+//use std::ffi::{CString};
 
-#[derive(Debug)]
 #[repr(C)]
 pub struct PowerSocket {
-    name: CString,
+    name: String,
     state: PowerSocketState,
     power_consumption: usize,
 }
@@ -18,27 +17,29 @@ impl Default for PowerSocket {
 }
 
 impl PowerSocket {
-    pub extern "C" fn new() -> Self {
+
+    pub fn new() -> Self {
         Self::default()
     }
-    pub extern "C" fn turn_on(&mut self) {
+
+    pub fn turn_on(&mut self) {
         self.state = PowerSocketState::Powered;
         self.power_consumption = 220;
     }
-    pub extern "C" fn turn_off(&mut self) {
+    pub fn turn_off(&mut self) {
         self.state = PowerSocketState::NotPowered;
         self.power_consumption = 0;
     }
-    pub extern "C" fn get_state(&self) -> PowerSocketState {
+    pub fn get_state(&self) -> PowerSocketState {
         self.state
     }
-    pub extern "C" fn get_voltage(&self) -> usize {
+    pub fn get_voltage(&self) -> usize {
         self.power_consumption
     }
 }
 
 #[derive(Debug, Copy, Clone)]
-#[repr(u8)]
+#[repr(C)]
 pub enum PowerSocketState {
     Powered = 1,
     NotPowered = 0,

@@ -1,11 +1,23 @@
 mod power_socket;
 
-pub use power_socket::PowerSocket;
+use power_socket::{PowerSocket, PowerSocketState};
 
+#[no_mangle]
 pub extern "C" fn create_power_socket() -> PowerSocket {
     PowerSocket::new()
 }
 
-// pub extern "C" fn new() -> PowerSocket {
-//     Default::default()
-// }
+#[no_mangle]
+pub extern "C" fn turn_off(socket: &mut PowerSocket) {
+    socket.turn_off()
+}
+
+#[no_mangle]
+pub extern "C" fn turn_on(socket: &mut PowerSocket) {
+    socket.turn_on()
+}
+
+#[no_mangle]
+pub extern "C" fn get_state(socket: &PowerSocket) -> PowerSocketState {
+    socket.get_state()
+}
