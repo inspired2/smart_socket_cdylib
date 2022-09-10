@@ -32,9 +32,6 @@ impl PowerSocket {
     pub fn get_state(&self) -> PowerSocketState {
         self.state
     }
-    pub fn get_voltage(&self) -> usize {
-        self.power_consumption
-    }
 }
 
 #[derive(Debug, Copy, Clone)]

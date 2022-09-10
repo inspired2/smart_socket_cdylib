@@ -1,5 +1,18 @@
 use libloading::{Library, Symbol};
+type FunctionsFn = extern "C" fn() -> Functions;
+type New = extern "C" fn() -> *mut PowerSocket;
+type TurnOn = extern "C" fn(*mut PowerSocket);
+type TurnOff = extern "C" fn(*mut PowerSocket);
+type State = extern "C" fn(*const PowerSocket) -> *const PowerSocketState;
 
+#[repr(C)]
+pub struct Functions {
+    size: usize,
+    new: New,
+    turn_off: TurnOff,
+    turn_on: TurnOn,
+    status: State,
+}
 #[derive(Debug)]
 #[repr(C)]
 struct PowerSocket {
@@ -14,30 +27,25 @@ enum PowerSocketState {
     PoweredOn = 1,
     PoweredOff = 0,
 }
-type CreateSocketFn = unsafe extern "C" fn() -> *mut PowerSocket;
-type TurnOn = unsafe extern "C" fn(*mut PowerSocket);
-type TurnOff = unsafe extern "C" fn(*mut PowerSocket);
-type GetState = unsafe extern "C" fn(*const PowerSocket) -> PowerSocketState;
 
 fn main() {
     let filename = "/home/alex/projects/smart_socket/target/release/libsmart_socket.so";
     let lib = unsafe { Library::new(filename).expect("Unable to load library at {filename}") };
 
-    let create_power_socket: Symbol<CreateSocketFn> =
-        unsafe { lib.get(b"new").expect("not found") };
-    let turn_off: Symbol<TurnOn> = unsafe { lib.get(b"turn_on").unwrap() };
-    let turn_on: Symbol<TurnOff> = unsafe { lib.get(b"turn_off").unwrap() };
-    let get_state: Symbol<GetState> = unsafe { lib.get(b"get_state").unwrap() };
+    let get_functions: Symbol<FunctionsFn> = unsafe {
+        lib.get(b"load_functions")
+            .expect("Unable to load functions")
+    };
 
-    let power_socket = unsafe { create_power_socket() };
+    let functions = get_functions();
 
-    unsafe { turn_on(power_socket) };
-    println!("Turned on. State: {:?}", unsafe {
-        get_state(power_socket)
-    });
+    //Box will handle drop of received allocated mem
+    let mut power_socket = unsafe { Box::from_raw((functions.new)())};
 
-    unsafe { turn_off(power_socket) };
-    println!("Turned off. State: {:?}", unsafe {
-        get_state(power_socket)
-    });
+    (functions.turn_on)(&mut *power_socket as *mut PowerSocket);
+
+    println!("Turned on. State: {:?}", unsafe { *(functions.status)(&*power_socket as *const PowerSocket) });
+
+    (functions.turn_off)(&mut *power_socket as *mut PowerSocket);
+    println!("Turned off. State: {:?}", unsafe { *(functions.status)(&*power_socket as *const PowerSocket) });
 }
